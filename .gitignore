@@ -4,3 +4,4 @@ packages/
 
 # Remove to utilise CI/CD
 .github/*
+.fake
