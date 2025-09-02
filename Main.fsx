@@ -12,7 +12,7 @@ open System.Data
 // TYPE DEFINITIONS
 
 type AccessTokenReponse = JsonProvider<"sample/access_token.json">
-type PlaylistResponse = JsonProvider<"sample/playlist.json">
+type PlaylistItemsResponse = JsonProvider<"sample/playlist_items.json">
 type StagingEntity = {
     PlaylistSpotifyId : string
     TrackSpotifyId : string
@@ -32,7 +32,7 @@ type PlaylistEntity = {
 let SpotifyApiUrl = "https://api.spotify.com/v1"
 let SpotifyWebsiteUrl = "https://open.spotify.com"
 let TrackIdFromMetaTag = @"<meta name=""music:song"" content=""https://open\.spotify\.com/track/([a-zA-Z0-9]+)""\s*/>" |> Regex
-
+let SpotifyTrackLimit = 50
 
 // UTILITY FUNCTIONS
 
@@ -85,29 +85,42 @@ let getAccessToken () : string option =
         |> Some
     | _ -> None
 
-// TODO: Make this paginate across the response
 // TODO: Implement exponential backoff
-let rec getPlaylistFromApi (accessToken: string)  (playlistId: string) : StagingEntity list option =
+let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: string) : StagingEntity list option =
     let response =
             Http.Request (
-                $"{SpotifyApiUrl}/playlists/{playlistId}",
+                $"{SpotifyApiUrl}/playlists/{playlistId}/tracks",
                 httpMethod = HttpMethod.Get,
+                query = [
+                    "offset", offset.ToString();
+                    "limit", SpotifyTrackLimit.ToString()],
                 headers = ["Authorization", $"Bearer {accessToken}"]
             )
 
     match response.StatusCode, response.Body with
     | 200, Text json -> 
-        json
-        |> PlaylistResponse.Parse
-        |> _.Tracks.Items
-        |> Array.mapi (fun i playlist -> 
-        {
-            PlaylistSpotifyId = playlistId
-            TrackSpotifyId = playlist.Track.Id
-            Rank = i + 1
-        })
-        |> List.ofArray
-        |> Some
+        let playlistItems =  
+            json |> PlaylistItemsResponse.Parse  
+    
+        let currentTracks =  
+            playlistItems.Items  
+            |> Array.mapi (fun i playlistItem ->  
+                {  
+                    PlaylistSpotifyId = playlistId  
+                    TrackSpotifyId = playlistItem.Track.Id  
+                    Rank = i + offset + 1  
+                })  
+            |> List.ofArray  
+        
+        let subsequentTracks =  
+            if playlistItems.Total >= offset + SpotifyTrackLimit then  
+                getPlaylistFromApi accessToken (offset + SpotifyTrackLimit) playlistId  
+                |> Option.defaultValue []  
+            else  
+                []  
+        
+        Some (currentTracks @ subsequentTracks)
+
     | _ -> None
 
 // TODO: Implement exponential backoff
@@ -131,6 +144,7 @@ let rec fetchPlaylistFromWeb (playlistId: string) : StagingEntity list option =
             })
         |> List.ofSeq
         |> Some
+
     | _ -> None
     
 // TODO: Convert to async for parallel processing
@@ -139,7 +153,7 @@ let fetchAllPlaylistTracks (accessToken: string) (playlists : PlaylistEntity lis
     |> List.map (fun p ->
         if p.IsSpotifyGenerated 
         then fetchPlaylistFromWeb p.PlaylistSpotifyId
-        else getPlaylistFromApi accessToken p.PlaylistSpotifyId
+        else getPlaylistFromApi accessToken 0 p.PlaylistSpotifyId
     )
     |> List.collect (fun optList ->
         match optList with
