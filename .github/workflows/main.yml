@@ -1,0 +1,22 @@
+name: Daily Fetch Playlist Tracks
+
+on:
+  schedule:
+    - cron: "41 01 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:8.0
+    env:
+      client_id: ${{ secrets.CLIENT_ID }}
+      client_secret: ${{ secrets.CLIENT_SECRET }}
+      connection_string: ${{ secrets.CONNECTION_STRING }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run F# Script
+        run: dotnet fsi ./Main.fsx
