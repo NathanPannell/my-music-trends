@@ -2,6 +2,3 @@ packages/
 .vscode/
 .env
 .idea/
-
-# Remove to utilise CI/CD
-.github/*
