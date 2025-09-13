@@ -1,4 +1,4 @@
-name: Daily Fetch Playlist Tracks
+name: Sync playlists daily
 
 on:
   schedule:
