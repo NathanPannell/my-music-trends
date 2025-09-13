@@ -17,7 +17,6 @@
         "type": "user",
         "uri": "string"
       },
-      "is_local": false,
       "track": {
         "album": {
           "album_type": "compilation",

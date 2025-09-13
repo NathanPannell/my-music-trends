@@ -19,9 +19,7 @@ type StagingEntity = {
     Rank : int
 }
 type PlaylistEntity = {
-    PlaylistId : int
     PlaylistSpotifyId : string
-    PlaylistOwnerSpotifyId : string
     IsOrdered : bool
     IsSpotifyGenerated : bool
 }
@@ -33,6 +31,7 @@ let SpotifyApiUrl = "https://api.spotify.com/v1"
 let SpotifyWebsiteUrl = "https://open.spotify.com"
 let TrackIdFromMetaTag = @"<meta name=""music:song"" content=""https://open\.spotify\.com/track/([a-zA-Z0-9]+)""\s*/>" |> Regex
 let SpotifyTrackLimit = 50
+
 
 // UTILITY FUNCTIONS
 
@@ -85,7 +84,6 @@ let getAccessToken () : string option =
         |> Some
     | _ -> None
 
-// TODO: Implement exponential backoff
 let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: string) : StagingEntity list option =
     let response =
             Http.Request (
@@ -99,8 +97,7 @@ let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: stri
 
     match response.StatusCode, response.Body with
     | 200, Text json -> 
-        let playlistItems =  
-            json |> PlaylistItemsResponse.Parse  
+        let playlistItems = json |> PlaylistItemsResponse.Parse  
     
         let currentTracks =  
             playlistItems.Items  
@@ -123,7 +120,6 @@ let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: stri
 
     | _ -> None
 
-// TODO: Implement exponential backoff
 let rec fetchPlaylistFromWeb (playlistId: string) : StagingEntity list option = 
     let response =
         Http.Request (
@@ -148,6 +144,7 @@ let rec fetchPlaylistFromWeb (playlistId: string) : StagingEntity list option =
     | _ -> None
     
 // TODO: Convert to async for parallel processing
+// TODO: Implement exponential backoff
 let fetchAllPlaylistTracks (accessToken: string) (playlists : PlaylistEntity list) : StagingEntity list =
     playlists
     |> List.map (fun p ->
@@ -169,26 +166,20 @@ let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
     
     use cmd = new SqlCommand("
         SELECT 
-            playlist_id,
             playlist_spotify_id,
-            playlist_owner_spotify_id,
             is_ordered,
             is_spotify_generated
         FROM playlists", conn)
     
     use reader = cmd.ExecuteReader()
 
-    let ordPlaylistId = reader.GetOrdinal "playlist_id"
     let ordPlaylistSpotifyId = reader.GetOrdinal "playlist_spotify_id"
-    let ordPlaylistOwnerSpotifyId = reader.GetOrdinal "playlist_owner_spotify_id"
     let ordIsOrdered = reader.GetOrdinal "is_ordered"
     let ordIsSpotifyGenerated = reader.GetOrdinal "is_spotify_generated"
 
     [ while reader.Read() do
         yield {
-            PlaylistId = reader.GetFieldValue<int> ordPlaylistId
             PlaylistSpotifyId = reader.GetFieldValue<string> ordPlaylistSpotifyId
-            PlaylistOwnerSpotifyId = reader.GetFieldValue<string> ordPlaylistOwnerSpotifyId
             IsOrdered = reader.GetFieldValue<bool> ordIsOrdered
             IsSpotifyGenerated = reader.GetFieldValue<bool> ordIsSpotifyGenerated
         }
