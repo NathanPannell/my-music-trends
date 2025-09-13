@@ -59,6 +59,8 @@ let toDataTable<'T> (rows: 'T seq) : DataTable =
             Array.map (fun prop -> prop.GetValue(row))
         table.Rows.Add values |> ignore)
     
+    table.Rows.Count |> printfn "Created data table containing %d rows"
+
     table
 
 
@@ -85,6 +87,7 @@ let getAccessToken () : string option =
     | _ -> None
 
 let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: string) : StagingEntity list option =
+    printfn "Fetching playlist %s from Spotify Web API with offset=%d" playlistId offset
     let response =
             Http.Request (
                 $"{SpotifyApiUrl}/playlists/{playlistId}/tracks",
@@ -118,9 +121,12 @@ let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: stri
         
         Some (currentTracks @ subsequentTracks)
 
-    | _ -> None
+    | _ -> 
+        printfn "Error fetching playlist..."
+        None
 
 let rec fetchPlaylistFromWeb (playlistId: string) : StagingEntity list option = 
+    printfn "Fetching playlist %s from open.spotify.com" playlistId
     let response =
         Http.Request (
             $"{SpotifyWebsiteUrl}/playlist/{playlistId}",
@@ -141,7 +147,9 @@ let rec fetchPlaylistFromWeb (playlistId: string) : StagingEntity list option =
         |> List.ofSeq
         |> Some
 
-    | _ -> None
+    | _ -> 
+        printfn "Error fetching playlist..."
+        None
     
 // TODO: Convert to async for parallel processing
 // TODO: Implement exponential backoff
@@ -161,6 +169,7 @@ let fetchAllPlaylistTracks (accessToken: string) (playlists : PlaylistEntity lis
 // DATABASE IO OPERATIONS
 
 let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
+    printfn "Fetching playlist IDs from database"
     use conn = new SqlConnection(connectionString)
     conn.Open()
     
@@ -185,14 +194,18 @@ let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
         }
     ]
 
+
 let insertRecordsInStaging (connectionString: string) (recordsForStaging: StagingEntity seq) : unit =
     use bulk = new SqlBulkCopy(connectionString, SqlBulkCopyOptions.FireTriggers)
     bulk.DestinationTableName <- "playlist_tracks_staging"
     bulk.WriteToServer(toDataTable recordsForStaging)
+    printfn "Successfully wrote %d records to database" (recordsForStaging |> Seq.length)
 
 
 let main () = 
     let spotifyAccessToken = getAccessToken () |> Option.get
+    spotifyAccessToken |> printfn "Fetched Spotify access token:\n%s\n"
+
     let dbConnectionString = getEnv "connection_string"
 
     getPlaylistRecordsFromDb dbConnectionString
