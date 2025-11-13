@@ -37,6 +37,7 @@ This is the schema for the Azure SQL Database that:
 - Receives snapshot data from `Main.fsx`
 - Uses a trigger to save changes according to **Type 2 SCD**
 
+
 ---
 
 ## License
