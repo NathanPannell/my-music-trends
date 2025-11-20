@@ -23,6 +23,13 @@ type PlaylistEntity = {
     IsOrdered : bool
     IsSpotifyGenerated : bool
 }
+type TrackMetadataResponse = JsonProvider<"sample/tracks.json">
+type TrackEntity = {
+    TrackSpotifyId : string
+    TrackName : string
+    AlbumArtUri : string
+    ArtistName : string
+}
 
 
 // GLOBAL CONSTANTS
@@ -165,6 +172,50 @@ let fetchAllPlaylistTracks (accessToken: string) (playlists : PlaylistEntity lis
         | Some items -> items
         | None -> [])
 
+let fetchTrackMetadata (accessToken: string) (trackIds: string list) : TrackEntity list =
+    let batches = trackIds |> List.chunkBySize SpotifyTrackLimit
+    
+    batches
+    |> List.collect (fun batch ->
+        printfn "Fetching metadata for %d tracks..." batch.Length
+        
+        // Rate limiting delay
+        System.Threading.Thread.Sleep(500)
+
+        let idsParam = String.concat "," batch
+        let response = 
+            Http.Request(
+                $"{SpotifyApiUrl}/tracks",
+                httpMethod = HttpMethod.Get,
+                query = ["ids", idsParam],
+                headers = ["Authorization", $"Bearer {accessToken}"]
+            )
+
+        match response.StatusCode, response.Body with
+        | 200, Text json ->
+            let data = TrackMetadataResponse.Parse(json)
+            data.Tracks
+            |> Array.map (fun t -> 
+                let albumArt = 
+                    if t.Album.Images.Length > 0 
+                    then t.Album.Images.[0].Url 
+                    else ""
+                let artistName =
+                    if t.Artists.Length > 0
+                    then t.Artists.[0].Name
+                    else ""
+                {
+                    TrackSpotifyId = t.Id
+                    TrackName = t.Name
+                    AlbumArtUri = albumArt
+                    ArtistName = artistName
+                })
+            |> List.ofArray
+        | _ -> 
+            printfn "Error fetching track metadata"
+            []
+    )
+
 
 // DATABASE IO OPERATIONS
 
@@ -202,6 +253,54 @@ let insertRecordsInStaging (connectionString: string) (recordsForStaging: Stagin
     printfn "Successfully wrote %d records to database" (recordsForStaging |> Seq.length)
 
 
+let getTracksWithMissingMetadata (connectionString: string) : string list =
+    printfn "Fetching tracks with missing metadata..."
+    use conn = new SqlConnection(connectionString)
+    conn.Open()
+    
+    use cmd = new SqlCommand("
+        SELECT track_spotify_id 
+        FROM tracks 
+        WHERE track_name IS NULL OR album_art_uri IS NULL OR artist_name IS NULL", conn)
+    
+    use reader = cmd.ExecuteReader()
+    [ while reader.Read() do
+        yield reader.GetString(0)
+    ]
+
+let updateTrackMetadata (connectionString: string) (tracks: TrackEntity list) : unit =
+    if tracks.IsEmpty then ()
+    else
+        printfn "Updating metadata for %d tracks..." tracks.Length
+        use conn = new SqlConnection(connectionString)
+        conn.Open()
+        
+        // Using a transaction for bulk updates could be better, but simple loop is fine for now
+        // or construct a large UPDATE statement or use a temp table.
+        // Given the likely volume, individual updates might be slow but safe enough.
+        // Let's use a parameterized query in a loop for simplicity and safety.
+        
+        use cmd = new SqlCommand("
+            UPDATE tracks 
+            SET track_name = @name, album_art_uri = @art, artist_name = @artist
+            WHERE track_spotify_id = @id", conn)
+            
+        let pId = cmd.Parameters.Add("@id", SqlDbType.VarChar, 22)
+        let pName = cmd.Parameters.Add("@name", SqlDbType.NVarChar, 255)
+        let pArt = cmd.Parameters.Add("@art", SqlDbType.VarChar, 255)
+        let pArtist = cmd.Parameters.Add("@artist", SqlDbType.NVarChar, 255)
+        
+        tracks |> List.iter (fun t ->
+            pId.Value <- t.TrackSpotifyId
+            pName.Value <- t.TrackName
+            pArt.Value <- t.AlbumArtUri
+            pArtist.Value <- t.ArtistName
+            cmd.ExecuteNonQuery() |> ignore
+        )
+        printfn "Successfully updated track metadata"
+
+
+
 let main () = 
     let spotifyAccessToken = getAccessToken () |> Option.get
     spotifyAccessToken |> printfn "Fetched Spotify access token:\n%s\n"
@@ -211,6 +310,16 @@ let main () =
     getPlaylistRecordsFromDb dbConnectionString
     |> fetchAllPlaylistTracks spotifyAccessToken
     |> insertRecordsInStaging dbConnectionString
+
+    // New metadata population flow
+    let missingTracks = getTracksWithMissingMetadata dbConnectionString
+    if not missingTracks.IsEmpty then
+        printfn "Found %d tracks with missing metadata" missingTracks.Length
+        let trackMetadata = fetchTrackMetadata spotifyAccessToken missingTracks
+        updateTrackMetadata dbConnectionString trackMetadata
+    else
+        printfn "No tracks found with missing metadata"
+
 
 
 main ()

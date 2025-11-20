@@ -14,7 +14,8 @@ create table tracks
     track_spotify_id varchar(22) not null
         primary key,
     track_name       nvarchar(255),
-    album_art_uri    varchar(255)
+    album_art_uri    varchar(255), 
+    artist_name      nvarchar(255)
 )
 go
 
