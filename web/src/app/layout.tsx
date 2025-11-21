@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Playlist History",
-  description: "Interactive timeline of playlist history",
+  title: "Playlist Wrapped",
+  description: "Your interactive music history timeline",
 };
 
 export default function RootLayout({
