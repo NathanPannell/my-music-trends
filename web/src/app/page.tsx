@@ -143,9 +143,9 @@ export default function DashboardPage() {
         {/* Header & Stats Section */}
         <div className="space-y-8">
           {/* Playlist Header */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/10">
+          <div className="relative rounded-2xl border border-white/10">
             {/* Blurred Background Layer */}
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 rounded-2xl overflow-hidden">
               <img 
                 src={displayImage} 
                 alt="" 
@@ -154,67 +154,70 @@ export default function DashboardPage() {
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/90" />
             </div>
 
-            <div className="relative z-10 p-6 flex flex-col gap-6">
-              <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="relative z-10 p-6 flex flex-col gap-8">
+              {/* Top Row: Image, Info, Selector */}
+              <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                 {/* Cover Image */}
                 <div className="shrink-0 shadow-2xl rounded-lg overflow-hidden">
                   <img 
                     src={displayImage} 
                     alt={displayName} 
-                    className="w-32 h-32 object-cover"
+                    className="w-32 h-32 md:w-24 md:h-24 object-cover"
                   />
                 </div>
 
-                {/* Info & Stats Container */}
-                <div className="flex-1 w-full flex flex-col md:flex-row justify-between gap-6">
-                  <div className="flex-1">
-                    <div>
-                      <h2 className="text-[10px] font-bold tracking-widest text-white/60 uppercase mb-1">Playlist</h2>
-                      <h1 className="text-2xl md:text-4xl font-black text-white mb-2 tracking-tight leading-tight">
-                        <a 
-                          href={`https://open.spotify.com/playlist/${selectedPlaylistId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline decoration-white/30 underline-offset-4"
-                        >
-                          {displayName}
-                        </a>
-                      </h1>
+                {/* Info */}
+                <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4 md:gap-8 text-center md:text-left min-w-0">
+                  <div>
+                    <h2 className="text-[10px] font-bold tracking-widest text-white/60 uppercase mb-1">Playlist</h2>
+                    <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none truncate">
+                      <a 
+                        href={`https://open.spotify.com/playlist/${selectedPlaylistId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline decoration-white/30 underline-offset-4"
+                      >
+                        {displayName}
+                      </a>
+                    </h1>
+                  </div>
+
+                  {/* Owner Info */}
+                  <div className="flex items-center justify-center md:justify-start gap-3 bg-black/20 backdrop-blur-md p-1.5 pr-4 rounded-full border border-white/5 shrink-0">
+                    <img 
+                      src={metadata?.owner?.images?.[0]?.url || '/spotify-logo.png'} 
+                      alt={metadata?.owner?.display_name || 'Spotify'} 
+                      className="w-6 h-6 rounded-full"
+                    />
+                    <div className="text-xs">
+                      <span className="text-white/60 mr-1">by</span>
+                      <span className="font-bold text-white">{metadata?.owner?.display_name || 'Spotify'}</span>
                     </div>
-                    <div className="w-48">
-                      <PlaylistSelector 
-                        playlists={playlists} 
-                        selectedId={selectedPlaylistId} 
-                        onSelect={setSelectedPlaylistId} 
-                      />
-                    </div>
-                {/* Owner Info */}
-                <div className="flex items-center gap-3 bg-black/20 backdrop-blur-md p-2 pr-4 rounded-full border border-white/5 self-start">
-                  <img 
-                    src={metadata?.owner?.images?.[0]?.url || '/spotify-logo.png'} 
-                    alt={metadata?.owner?.display_name || 'Spotify'} 
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="text-xs">
-                    <p className="text-white/60">Created by</p>
-                    <p className="font-bold text-white">{metadata?.owner?.display_name || 'Spotify'}</p>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Stats Integration */}
-            {data && (
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <PlaylistStats 
-                  stats={data.stats} 
-                  definitions={data.trackDefinitions} 
-                  onTrackClick={handleTrackClick}
-                />
+                {/* Selector */}
+                <div className="w-full md:w-64 shrink-0">
+                  <PlaylistSelector 
+                    playlists={playlists} 
+                    selectedId={selectedPlaylistId} 
+                    onSelect={setSelectedPlaylistId} 
+                  />
+                </div>
               </div>
-            )}
+
+              {/* Stats Integration */}
+              {data && (
+                <div className="pt-6 border-t border-white/10">
+                  <PlaylistStats 
+                    stats={data.stats} 
+                    definitions={data.trackDefinitions} 
+                    onTrackClick={handleTrackClick}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         </div>
 
         {loading || !data ? (
@@ -222,7 +225,22 @@ export default function DashboardPage() {
             {loading ? 'Loading timeline data...' : 'Select a playlist to view history'}
           </div>
         ) : (
-          <>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Daily History</h2>
+                <p className="text-zinc-400 text-sm">Track rankings over time</p>
+              </div>
+              <div className="text-zinc-500 text-sm font-mono">
+                {new Date(data.snapshots[currentDateIndex].date).toLocaleDateString(undefined, { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </div>
+            </div>
+
             <DayView 
               tracks={data.snapshots[currentDateIndex].tracks} 
               definitions={data.trackDefinitions} 
@@ -241,10 +259,10 @@ export default function DashboardPage() {
               }}
               onSpeedChange={setPlaybackSpeed}
             />
-          </>
+          </div>
         )}
       </div>
     </div>
-  </div>
+
   );
 }
