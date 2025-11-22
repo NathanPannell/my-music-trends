@@ -56,10 +56,10 @@ export interface PlaylistMetadata {
   owner: {
     display_name: string;
     id: string;
+    images: SpotifyImage[];
   };
   images: SpotifyImage[];
   description: string;
-  userProfile?: UserProfile;
 }
 
 export async function getUserProfile(userId: string): Promise<UserProfile> {

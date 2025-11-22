@@ -137,34 +137,36 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Compact Immersive Header */}
-        <div className="relative rounded-2xl overflow-hidden mb-8 border border-white/10">
-          {/* Blurred Background Layer */}
-          <div className="absolute inset-0 z-0">
-            <img 
-              src={displayImage} 
-              alt="" 
-              className="w-full h-full object-cover blur-3xl opacity-30 scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/90" />
-          </div>
+      <div className="max-w-7xl mx-auto space-y-12">
+        
+        {/* Header & Stats Section */}
+        <div className="space-y-8">
+          {/* Playlist Header */}
+          <div className="relative rounded-2xl overflow-hidden border border-white/10">
+            {/* Blurred Background Layer */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={displayImage} 
+                alt="" 
+                className="w-full h-full object-cover blur-3xl opacity-30 scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/90" />
+            </div>
 
-          <div className="relative z-10 p-6 flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row items-start gap-6">
-              {/* Cover Image - Smaller */}
-              <div className="shrink-0 shadow-2xl rounded-lg overflow-hidden">
-                <img 
-                  src={displayImage} 
-                  alt={displayName} 
-                  className="w-32 h-32 object-cover"
-                />
-              </div>
+            <div className="relative z-10 p-6 flex flex-col gap-6">
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                {/* Cover Image */}
+                <div className="shrink-0 shadow-2xl rounded-lg overflow-hidden">
+                  <img 
+                    src={displayImage} 
+                    alt={displayName} 
+                    className="w-32 h-32 object-cover"
+                  />
+                </div>
 
-              {/* Info & Stats Container */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between gap-4">
-                <div>
-                  <div className="flex justify-between items-start">
+                {/* Info & Stats Container */}
+                <div className="flex-1 w-full flex flex-col md:flex-row justify-between gap-6">
+                  <div className="flex-1">
                     <div>
                       <h2 className="text-[10px] font-bold tracking-widest text-white/60 uppercase mb-1">Playlist</h2>
                       <h1 className="text-2xl md:text-4xl font-black text-white mb-2 tracking-tight leading-tight">
@@ -178,51 +180,39 @@ export default function DashboardPage() {
                         </a>
                       </h1>
                     </div>
-                    <div>
-                      <PlaylistSelector
-                        playlists={playlists}
-                        selectedId={selectedPlaylistId}
-                        onSelect={setSelectedPlaylistId}
-                        disabled={loading}
+                    <div className="w-48">
+                      <PlaylistSelector 
+                        playlists={playlists} 
+                        selectedId={selectedPlaylistId} 
+                        onSelect={setSelectedPlaylistId} 
                       />
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 text-xs font-medium mt-1">
-                    {/* Owner */}
-                    <a 
-                      href={metadata?.owner.id ? `https://open.spotify.com/user/${metadata.owner.id}` : '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full border border-white/5 hover:bg-white/20 transition-colors group"
-                    >
-                      {metadata?.userProfile?.images?.[0]?.url ? (
-                        <img 
-                          src={metadata.userProfile.images[0].url} 
-                          alt={metadata.owner.display_name} 
-                          className="w-4 h-4 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full bg-zinc-700" />
-                      )}
-                      <span className="text-white group-hover:text-green-400 transition-colors">
-                        {metadata?.owner.display_name || 'Unknown User'}
-                      </span>
-                    </a>
+                {/* Owner Info */}
+                <div className="flex items-center gap-3 bg-black/20 backdrop-blur-md p-2 pr-4 rounded-full border border-white/5 self-start">
+                  <img 
+                    src={metadata?.owner?.images?.[0]?.url || '/spotify-logo.png'} 
+                    alt={metadata?.owner?.display_name || 'Spotify'} 
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div className="text-xs">
+                    <p className="text-white/60">Created by</p>
+                    <p className="font-bold text-white">{metadata?.owner?.display_name || 'Spotify'}</p>
                   </div>
                 </div>
-                
-                {/* Integrated Stats */}
-                {!loading && data && (
-                   <PlaylistStats 
-                     stats={data.stats} 
-                     definitions={data.trackDefinitions} 
-                     onTrackClick={handleTrackClick}
-                   />
-                )}
               </div>
             </div>
+
+            {/* Stats Integration */}
+            {data && (
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <PlaylistStats 
+                  stats={data.stats} 
+                  definitions={data.trackDefinitions} 
+                />
+              </div>
+            )}
           </div>
+        </div>
         </div>
 
         {loading || !data ? (
@@ -253,5 +243,6 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  </div>
   );
 }

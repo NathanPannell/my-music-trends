@@ -10,6 +10,7 @@ interface TimelineControlsProps {
   onPlayPause: () => void;
   onSeek: (index: number) => void;
   onSpeedChange: (speed: number) => void;
+  onPlay?: () => void;
 }
 
 export function TimelineControls({
@@ -19,7 +20,8 @@ export function TimelineControls({
   playbackSpeed,
   onPlayPause,
   onSeek,
-  onSpeedChange
+  onSpeedChange,
+  onPlay
 }: TimelineControlsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -28,7 +30,7 @@ export function TimelineControls({
   // Calculate positions for each snapshot
   const positions = useMemo(() => {
     if (snapshots.length < 2) return [0];
-    
+
     const firstTime = new Date(snapshots[0].date).getTime();
     const lastTime = new Date(snapshots[snapshots.length - 1].date).getTime();
     const totalDuration = lastTime - firstTime;

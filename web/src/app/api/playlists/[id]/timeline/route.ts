@@ -176,7 +176,25 @@ export async function GET(
       }
     });
 
-    const uniqueNumberOneTracks = numberOneTracks.size;
+    // Calculate Unique #1s List
+    const numberOneStats: Record<string, number> = {};
+    snapshots.forEach((snapshot, index) => {
+      const nextSnapshotDate = index < snapshots.length - 1 
+        ? new Date(snapshots[index + 1].date) 
+        : new Date();
+      const currentSnapshotDate = new Date(snapshot.date);
+      const durationDays = Math.max(1, Math.ceil((nextSnapshotDate.getTime() - currentSnapshotDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+      snapshot.tracks.forEach(t => {
+        if (t.rank === 1) {
+          numberOneStats[t.id] = (numberOneStats[t.id] || 0) + durationDays;
+        }
+      });
+    });
+
+    const uniqueNumberOneTracks = Object.entries(numberOneStats)
+      .map(([trackId, daysAtNo1]) => ({ trackId, daysAtNo1 }))
+      .sort((a, b) => b.daysAtNo1 - a.daysAtNo1);
 
     const allTrackStats = Object.entries(trackStats).map(([trackId, stats]) => ({
       trackId,

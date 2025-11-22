@@ -8,6 +8,7 @@ interface Playlist {
   id: string;
   name: string;
   owner: string;
+  
 }
 
 interface PlaylistSelectorProps {

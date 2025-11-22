@@ -1,11 +1,13 @@
 create table playlists
 (
-    playlist_spotify_id       varchar(22) not null
+    playlist_spotify_id         varchar(22) not null
         primary key,
-    playlist_name             varchar(255),
-    playlist_owner_spotify_id varchar(255),
-    is_ordered                bit         not null,
-    is_spotify_generated      bit         not null
+    playlist_name               varchar(255),
+    playlist_owner_spotify_id   varchar(255),
+    is_ordered                  bit         not null,
+    is_spotify_generated        bit         not null,
+    playlist_owner_display_name varchar(255),
+    playlist_art_uri            varchar(255)
 )
 go
 
