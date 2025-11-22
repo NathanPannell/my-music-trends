@@ -49,6 +49,9 @@ export interface UserProfile {
   display_name: string;
   id: string;
   images: SpotifyImage[];
+  external_urls: {
+    spotify: string;
+  };
 }
 
 export interface PlaylistMetadata {
@@ -57,6 +60,9 @@ export interface PlaylistMetadata {
     display_name: string;
     id: string;
     images: SpotifyImage[];
+    external_urls: {
+      spotify: string;
+    };
   };
   images: SpotifyImage[];
   description: string;
@@ -82,7 +88,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 export async function getPlaylistMetadata(playlistId: string): Promise<PlaylistMetadata> {
   const token = await getAccessToken();
 
-  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}?fields=name,owner(display_name,id),images,description`, {
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}?fields=name,owner(display_name,id,external_urls),images,description`, {
     headers: {
       'Authorization': `Bearer ${token}`,
     },

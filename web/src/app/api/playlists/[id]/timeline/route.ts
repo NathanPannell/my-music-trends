@@ -212,7 +212,7 @@ export async function GET(
         }
         return a.averageRank - b.averageRank; // Secondary: Average rank (asc)
       })
-      .slice(0, 5);
+      .slice(0, 10);
 
     const oneAndDoneTracks = allTrackStats
       .filter(t => t.days === 1)
@@ -222,7 +222,7 @@ export async function GET(
     const bestAverageRankTracks = [...allTrackStats]
       .filter(t => t.days >= 3) // Filter out tracks with very few days to avoid noise
       .sort((a, b) => a.averageRank - b.averageRank)
-      .slice(0, 5);
+      .slice(0, 10);
 
     const response: TimelineResponse = {
       playlistId: id,
