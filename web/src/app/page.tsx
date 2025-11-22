@@ -119,9 +119,56 @@ export default function DashboardPage() {
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 100);
+      }, 600);
     }
   };
+
+  const scrollToDayView = () => {
+    const element = document.getElementById('day-view-header');
+    if (element) {
+      const offset = 80; // Offset for sticky header/controls if needed, or just breathing room
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!data) return;
+
+      if (e.key === 'ArrowLeft') {
+        setCurrentDateIndex(prev => {
+          const newIndex = Math.max(0, prev - 1);
+          if (newIndex !== prev) scrollToDayView();
+          return newIndex;
+        });
+        setIsPlaying(false);
+      } else if (e.key === 'ArrowRight') {
+        setCurrentDateIndex(prev => {
+          const newIndex = Math.min(data.snapshots.length - 1, prev + 1);
+          if (newIndex !== prev) scrollToDayView();
+          return newIndex;
+        });
+        setIsPlaying(false);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        setIsPlaying(prev => {
+          const next = !prev;
+          if (next) scrollToDayView();
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [data]);
 
   if (!selectedPlaylistId && playlists.length === 0) {
      return (
@@ -226,7 +273,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div id="day-view-header" className="flex items-center justify-between border-b border-white/10 pb-4 scroll-mt-24">
               <div>
                 <h2 className="text-2xl font-bold text-white">Daily History</h2>
                 <p className="text-zinc-400 text-sm">Track rankings over time</p>
@@ -252,10 +299,15 @@ export default function DashboardPage() {
               snapshots={data.snapshots}
               isPlaying={isPlaying}
               playbackSpeed={playbackSpeed}
-              onPlayPause={() => setIsPlaying(!isPlaying)}
+              onPlayPause={() => {
+                const nextState = !isPlaying;
+                setIsPlaying(nextState);
+                if (nextState) scrollToDayView();
+              }}
               onSeek={(idx) => {
                 setCurrentDateIndex(idx);
                 setIsPlaying(false);
+                scrollToDayView();
               }}
               onSpeedChange={setPlaybackSpeed}
             />

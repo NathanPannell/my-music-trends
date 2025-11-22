@@ -30,16 +30,16 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/5">
         
         {/* Longest Streak */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-4 group relative cursor-help">
+        <div className="flex flex-col h-[400px]">
+          <div className="p-4 pb-2 flex items-center gap-2 group relative cursor-help shrink-0">
             <Trophy size={16} className="text-yellow-500" />
             <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Longest Streak</h3>
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
               Tracks with the most consecutive days on the chart.
             </div>
           </div>
-          <div className="space-y-3">
-            {stats.longestStreakTracks?.slice(0, 5).map((item, i) => {
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 space-y-3">
+            {stats.longestStreakTracks?.map((item, i) => {
               const def = definitions[item.trackId];
               if (!def) return null;
               return (
@@ -64,16 +64,16 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
         </div>
 
         {/* Best Average Rank */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-4 group relative cursor-help">
+        <div className="flex flex-col h-[400px]">
+          <div className="p-4 pb-2 flex items-center gap-2 group relative cursor-help shrink-0">
             <div className="text-green-400 text-xs font-bold">#</div>
             <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Best Average</h3>
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
               Tracks with the best average position (minimum 3 days).
             </div>
           </div>
-          <div className="space-y-3">
-            {stats.bestAverageRankTracks?.slice(0, 5).map((item, i) => {
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 space-y-3">
+            {stats.bestAverageRankTracks?.map((item, i) => {
               const def = definitions[item.trackId];
               if (!def) return null;
               return (
@@ -90,6 +90,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                   </div>
                   <div className="text-right">
                     <div className="text-xs font-bold text-green-400">#{item.averageRank.toFixed(1)}</div>
+                    <div className="text-[10px] text-zinc-500">{item.days}d</div>
                   </div>
                 </div>
               );
@@ -98,17 +99,17 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
         </div>
 
         {/* One Hit Wonders */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-4 group relative cursor-help">
+        <div className="flex flex-col h-[400px]">
+          <div className="p-4 pb-2 flex items-center gap-2 group relative cursor-help shrink-0">
             <div className="text-orange-400 text-xs font-bold">1</div>
             <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">One Hit Wonders</h3>
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
               Tracks that appeared on the chart for only one day.
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 space-y-3">
             {stats.oneAndDoneTracks?.length > 0 ? (
-              stats.oneAndDoneTracks.slice(0, 5).map((item, i) => {
+              stats.oneAndDoneTracks.map((item, i) => {
                 const def = definitions[item.trackId];
                 if (!def) return null;
                 return (
@@ -125,6 +126,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-bold text-orange-400">#{item.rank}</div>
+                      <div className="text-[10px] text-zinc-500">1d</div>
                     </div>
                   </div>
                 );
@@ -136,17 +138,17 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
         </div>
 
         {/* Unique #1s */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-4 group relative cursor-help">
+        <div className="flex flex-col h-[400px]">
+          <div className="p-4 pb-2 flex items-center gap-2 group relative cursor-help shrink-0">
             <Crown size={16} className="text-purple-400" />
             <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Unique #1s</h3>
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
               Tracks that reached the #1 spot.
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 space-y-3">
             {stats.uniqueNumberOneTracks?.length > 0 ? (
-              stats.uniqueNumberOneTracks.slice(0, 5).map((item, i) => {
+              stats.uniqueNumberOneTracks.map((item, i) => {
                 const def = definitions[item.trackId];
                 if (!def) return null;
                 return (

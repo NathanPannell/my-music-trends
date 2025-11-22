@@ -1,15 +1,13 @@
-- (no dependencies) Re-introduce the "jump to track in history" feature. This was for when the user clicked on a track in the timeline and it would scroll to that track in the playlist. 
+- Look into Main.fsx and see what's up with the syntax errors.
 
-- (no dependencies) Move the PlaylistSelector in front of the screen. It's currently being cut off the by edge of the stats section
+- add more entries to the "longest streak" and "best average" lists, they should include the top 10, still scrollable
 
-- (no dependencies) Reformat the header to have the playlist image, name, owner, and selector in the top row. Then the next row should be the stats section with both the numeric values and the lists. That is the end of the header section. Below this is a separate section for the day view with its own header and the list of tracks.
-- Make the lists in the stats section longer and scrollable. Include ranking and duration for all tracks included here.
-- Scroll down to the timeline section of the page when the day is changed (with a click or the arrow keys) or the play button is clicked. 
+- there is enough space on the top section next to the playlist title to make the user profile picture and name larger. Maybe make the playlist title larger and the user info also larger.
 
-- (no dependencies) Navigate through the timeline using the left and right arrow keys.
+- make the user profile clickable and teake them to the spofity profile page for that user
 
-- (no dependencies) Add a header / footer with some branding to the page to make it a bit more interesting.
+- remove the footer
 
-- (no dependencies) Look into Main.fsx and see what's up with the syntax errors.
+- make the hero section fill the whole first screen and  have a bouncing arrow directiong the user down to the stats section
 
-- (no dependencies) Update the readme.md
+- include a "back to top arrow" at the top once you've scrolled past the header for the dayview section

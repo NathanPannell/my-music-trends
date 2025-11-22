@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description: "Your interactive music history timeline",
 };
 
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,9 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-black text-white`}
+        suppressHydrationWarning
       >
-        {children}
+        <Header />
+        <main className="flex-1 pb-40">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );
