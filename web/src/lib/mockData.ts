@@ -24,7 +24,10 @@ export interface DailySnapshot {
 export interface PlaylistStats {
   uniqueTracks: number;
   totalDays: number;
-  mostPopularTracks: { trackId: string; days: number }[];
+  uniqueNumberOneTracks: number;
+  longestStreakTracks: { trackId: string; days: number; streak: number; averageRank: number }[];
+  oneAndDoneTracks: { trackId: string; days: number; rank: number }[];
+  bestAverageRankTracks: { trackId: string; averageRank: number; days: number }[];
 }
 
 export interface TimelineResponse {
@@ -132,7 +135,10 @@ export function generateMockTimeline(playlistId: string): TimelineResponse {
     stats: {
       uniqueTracks: MOCK_TRACKS.length,
       totalDays,
-      mostPopularTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, days: 20 }))
+      uniqueNumberOneTracks: 5,
+      longestStreakTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, days: 20, streak: 15, averageRank: 5 })),
+      oneAndDoneTracks: MOCK_TRACKS.slice(3, 4).map(t => ({ trackId: t.id, days: 1, rank: 10 })),
+      bestAverageRankTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, averageRank: 2.5, days: 15 }))
     },
     trackDefinitions,
     snapshots

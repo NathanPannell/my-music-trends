@@ -2,3 +2,4 @@ packages/
 .vscode/
 .env
 .idea/
+.fake
