@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, Music } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { SpotifyImage } from '@/lib/spotify';
 
 interface Playlist {
   id: string;
   name: string;
   owner: string;
-  
+  images: SpotifyImage[];
 }
 
 interface PlaylistSelectorProps {
@@ -96,7 +97,11 @@ export function PlaylistSelector({ playlists, selectedId, onSelect, disabled }: 
                         "w-8 h-8 rounded flex items-center justify-center shrink-0 transition-colors",
                         isSelected ? "bg-green-500/20 text-green-500" : "bg-zinc-800 text-zinc-600 group-hover:bg-zinc-700 group-hover:text-zinc-500"
                       )}>
-                        <Music size={16} />
+                        {playlist.images.length > 0 ? (
+                          <img src={playlist.images[0].url} alt="Playlist" className="w-full h-full object-cover rounded" />
+                        ) : (
+                          <Music size={16} />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm truncate">

@@ -11,9 +11,10 @@ interface Playlist {
   id: string;
   name: string;
   owner: string;
+  images: SpotifyImage[];
 }
 
-import { PlaylistMetadata } from '@/lib/spotify';
+import { PlaylistMetadata, SpotifyImage } from '@/lib/spotify';
 
 export default function DashboardPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -208,6 +209,7 @@ export default function DashboardPage() {
                 <PlaylistStats 
                   stats={data.stats} 
                   definitions={data.trackDefinitions} 
+                  onTrackClick={handleTrackClick}
                 />
               </div>
             )}

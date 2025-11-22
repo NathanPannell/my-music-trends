@@ -43,7 +43,11 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
               const def = definitions[item.trackId];
               if (!def) return null;
               return (
-                <a key={item.trackId} href={`https://open.spotify.com/track/${item.trackId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group/item">
+                <div 
+                  key={item.trackId} 
+                  onClick={() => onTrackClick?.(item.trackId)}
+                  className="flex items-center gap-3 group/item cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                >
                   <div className="text-xs font-mono text-zinc-600 w-4">{i + 1}</div>
                   <img src={def.albumArt} alt="" className="w-8 h-8 rounded bg-zinc-800 object-cover" />
                   <div className="flex-1 min-w-0">
@@ -53,7 +57,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                   <div className="text-right">
                     <div className="text-xs font-bold text-white">{item.streak}d</div>
                   </div>
-                </a>
+                </div>
               );
             })}
           </div>
@@ -73,7 +77,11 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
               const def = definitions[item.trackId];
               if (!def) return null;
               return (
-                <a key={item.trackId} href={`https://open.spotify.com/track/${item.trackId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group/item">
+                <div 
+                  key={item.trackId} 
+                  onClick={() => onTrackClick?.(item.trackId)}
+                  className="flex items-center gap-3 group/item cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                >
                   <div className="text-xs font-mono text-zinc-600 w-4">{i + 1}</div>
                   <img src={def.albumArt} alt="" className="w-8 h-8 rounded bg-zinc-800 object-cover" />
                   <div className="flex-1 min-w-0">
@@ -83,7 +91,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                   <div className="text-right">
                     <div className="text-xs font-bold text-green-400">#{item.averageRank.toFixed(1)}</div>
                   </div>
-                </a>
+                </div>
               );
             })}
           </div>
@@ -104,7 +112,11 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                 const def = definitions[item.trackId];
                 if (!def) return null;
                 return (
-                  <a key={item.trackId} href={`https://open.spotify.com/track/${item.trackId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group/item">
+                  <div 
+                    key={item.trackId} 
+                    onClick={() => onTrackClick?.(item.trackId)}
+                    className="flex items-center gap-3 group/item cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                  >
                     <div className="text-xs font-mono text-zinc-600 w-4">{i + 1}</div>
                     <img src={def.albumArt} alt="" className="w-8 h-8 rounded bg-zinc-800 object-cover" />
                     <div className="flex-1 min-w-0">
@@ -114,7 +126,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                     <div className="text-right">
                       <div className="text-xs font-bold text-orange-400">#{item.rank}</div>
                     </div>
-                  </a>
+                  </div>
                 );
               })
             ) : (
@@ -138,7 +150,11 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                 const def = definitions[item.trackId];
                 if (!def) return null;
                 return (
-                  <a key={item.trackId} href={`https://open.spotify.com/track/${item.trackId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group/item">
+                  <div 
+                    key={item.trackId} 
+                    onClick={() => onTrackClick?.(item.trackId)}
+                    className="flex items-center gap-3 group/item cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                  >
                     <div className="text-xs font-mono text-zinc-600 w-4">{i + 1}</div>
                     <img src={def.albumArt} alt="" className="w-8 h-8 rounded bg-zinc-800 object-cover" />
                     <div className="flex-1 min-w-0">
@@ -148,7 +164,7 @@ export function PlaylistStats({ stats, definitions, onTrackClick }: PlaylistStat
                     <div className="text-right">
                       <div className="text-xs font-bold text-purple-400">{item.daysAtNo1}d</div>
                     </div>
-                  </a>
+                  </div>
                 );
               })
             ) : (
