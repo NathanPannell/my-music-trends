@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { TimelineResponse } from '@/lib/mockData';
 import { PlaylistStats } from '@/components/PlaylistStats';
 import { TimelineControls } from '@/components/TimelineControls';
@@ -25,6 +26,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
+  const router = useRouter();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>(initialPlaylistId || '');
   const [data, setData] = useState<TimelineResponse | null>(null);
@@ -42,12 +44,22 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
     fetchWithRetry('/api/playlists')
       .then((data: Playlist[]) => {
         setPlaylists(data);
+        
+        if (initialPlaylistId) {
+          const exists = data.find(p => p.id === initialPlaylistId);
+          if (!exists) {
+            // Redirect to home with add param
+            router.push(`/?addPlaylist=${initialPlaylistId}`);
+            return;
+          }
+        }
+
         if (data.length > 0 && !selectedPlaylistId) {
           setSelectedPlaylistId(data[0].id);
         }
       })
       .catch(err => console.error('Failed to fetch playlists:', err));
-  }, [selectedPlaylistId]);
+  }, [initialPlaylistId]); // Add initialPlaylistId dependency
 
   // Fetch timeline and metadata when selected playlist changes
   useEffect(() => {

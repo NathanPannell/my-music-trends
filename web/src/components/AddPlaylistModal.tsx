@@ -1,25 +1,43 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle, Check, Loader2, ArrowRight } from 'lucide-react';
+import { X, AlertCircle, Check, Loader2, ArrowRight, Info } from 'lucide-react';
 import { previewPlaylist, addPlaylist } from '@/app/actions';
 
 interface AddPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialValue?: string;
 }
 
-export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
+export function AddPlaylistModal({ isOpen, onClose, initialValue = '' }: AddPlaylistModalProps) {
   const router = useRouter();
-  const [playlistId, setPlaylistId] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'preview' | 'fallback' | 'adding' | 'success' | 'exists'>('idle');
+  const [playlistId, setPlaylistId] = useState(initialValue);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'preview' | 'fallback' | 'spotify-generated' | 'adding' | 'success' | 'exists'>('idle');
   const [previewData, setPreviewData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && initialValue) {
+      setPlaylistId(initialValue);
+    }
+  }, [isOpen, initialValue]);
+
+  // Custom metadata for spotify-generated playlists
+  const [customName, setCustomName] = useState('');
+  const [customOwnerName, setCustomOwnerName] = useState('');
+  const [customOwnerLink, setCustomOwnerLink] = useState('');
 
   const extractId = (input: string) => {
     // Handle full URLs
     if (input.includes('spotify.com/playlist/')) {
       const parts = input.split('playlist/');
+      if (parts[1]) {
+        return parts[1].split('?')[0]; // Remove query params
+      }
+    }
+    if (input.includes('spotify.com/user/')) {
+      const parts = input.split('user/');
       if (parts[1]) {
         return parts[1].split('?')[0]; // Remove query params
       }
@@ -47,6 +65,8 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
     } else if (result.type === 'success') {
       setPreviewData(result.data);
       setStatus('preview');
+    } else if (result.type === 'spotify-generated') {
+      setStatus('spotify-generated');
     } else {
       setStatus('fallback');
     }
@@ -61,6 +81,9 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
         setStatus('idle');
         setPreviewData(null);
         setError(null);
+        setCustomName('');
+        setCustomOwnerName('');
+        setCustomOwnerLink('');
       }
     }, 1000);
 
@@ -71,7 +94,13 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
     const id = extractId(playlistId);
     setStatus('adding');
     
-    const result = await addPlaylist(id, status === 'fallback');
+    const isFallback = status === 'fallback' || status === 'spotify-generated';
+    const customMetadata = status === 'spotify-generated' ? {
+      name: customName,
+      ownerId: extractId(customOwnerLink) // Extract ID from link if provided
+    } : undefined;
+
+    const result = await addPlaylist(id, isFallback, customMetadata);
     
     if (result.success) {
       setStatus('success');
@@ -83,11 +112,21 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
           setPlaylistId('');
           setStatus('idle');
           setPreviewData(null);
+          setCustomName('');
+          setCustomOwnerName('');
+          setCustomOwnerLink('');
         }, 300);
       }, 1500);
     } else {
       setError(result.message || 'Failed to add playlist');
-      setStatus(status === 'fallback' ? 'fallback' : 'preview');
+      // Revert to previous status
+      if (customMetadata) {
+        setStatus('spotify-generated');
+      } else if (isFallback) {
+        setStatus('fallback');
+      } else {
+        setStatus('preview');
+      }
     }
   };
 
@@ -113,10 +152,10 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-lg bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
+        <div className="flex items-center justify-between p-6 border-b border-white/5 sticky top-0 bg-zinc-900 z-10">
           <h2 className="text-xl font-bold text-white">Add Playlist</h2>
           <button 
             onClick={onClose}
@@ -141,7 +180,7 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
               {/* Input */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-blue-400 bg-blue-400/10 p-3 rounded-lg border border-blue-400/20 mb-4">
-                  <AlertCircle size={16} className="shrink-0" />
+                  <Info size={16} className="shrink-0" />
                   <span>Please ensure the playlist is <strong>public</strong> before adding.</span>
                 </div>
 
@@ -155,7 +194,7 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
                     onChange={(e) => setPlaylistId(e.target.value)}
                     placeholder="https://open.spotify.com/playlist/..."
                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
-                    disabled={status !== 'idle' && status !== 'loading' && status !== 'preview' && status !== 'fallback' && status !== 'exists'}
+                    disabled={status !== 'idle' && status !== 'loading' && status !== 'preview' && status !== 'fallback' && status !== 'exists' && status !== 'spotify-generated'}
                   />
                 </div>
                 {error && (
@@ -218,26 +257,88 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
                   </motion.div>
                 )}
 
+                {status === 'spotify-generated' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-500/20">
+                      <div className="flex gap-3">
+                        <AlertCircle className="text-yellow-500 shrink-0" size={24} />
+                        <div className="space-y-2">
+                          <h3 className="font-bold text-yellow-500">Limited Data Available</h3>
+                          <p className="text-sm text-zinc-300">
+                            We confirmed this playlist exists, but it appears to be <strong>Spotify-generated</strong> (e.g., "On Repeat", "Discover Weekly").
+                          </p>
+                          <p className="text-sm text-zinc-300">
+                            We can track it, but we can't automatically fetch the name or owner. Please provide them below.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-400">Playlist Name</label>
+                        <input
+                          type="text"
+                          value={customName}
+                          onChange={(e) => setCustomName(e.target.value)}
+                          placeholder="e.g. My On Repeat"
+                          className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium text-zinc-400">Spotify User Link or ID (Optional)</label>
+                          <div className="relative group">
+                            <Info 
+                              size={14} 
+                              className="text-zinc-500 hover:text-zinc-300 cursor-help transition-colors" 
+                            />
+                            {/* Mobile-friendly tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-800 border border-white/10 rounded-xl shadow-xl text-xs text-zinc-300 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                              <p className="font-bold text-white mb-1">How to find your ID:</p>
+                              <ol className="list-decimal list-inside space-y-1">
+                                <li>Open Spotify Mobile App</li>
+                                <li>Click on profile icon</li>
+                                <li>Tap <strong>View Profile</strong></li>
+                                <li>Tap <strong>...</strong> (three dots)</li>
+                                <li>Tap <strong>Share</strong> &gt; <strong>Copy Link</strong></li>
+                              </ol>
+                              <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-800 border-r border-b border-white/10 rotate-45"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={customOwnerLink}
+                          onChange={(e) => setCustomOwnerLink(e.target.value)}
+                          placeholder="https://open.spotify.com/user/..."
+                          className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500"
+                        />
+                        <p className="text-xs text-zinc-500">
+                          We'll use this to fetch your display name and photo.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {status === 'fallback' && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-500/20"
+                    className="bg-red-500/10 rounded-xl p-4 border border-red-500/20"
                   >
                     <div className="flex gap-3">
-                      <AlertCircle className="text-yellow-500 shrink-0" size={24} />
+                      <AlertCircle className="text-red-500 shrink-0" size={24} />
                       <div className="space-y-2">
-                        <h3 className="font-bold text-yellow-500">Limited Tracking Available</h3>
+                        <h3 className="font-bold text-red-500">Unable to Verify</h3>
                         <p className="text-sm text-zinc-300">
-                          We couldn't fetch full details for this playlist. This usually happens with:
-                        </p>
-                        <ul className="text-sm text-zinc-400 list-disc list-inside ml-2">
-                          <li>Spotify-generated playlists (e.g., "On Repeat")</li>
-                          <li>Private playlists</li>
-                          <li>Playlists with missing metadata</li>
-                        </ul>
-                        <p className="text-sm text-zinc-300 mt-2">
-                          We can still track it, but <strong>only the top 30 songs</strong> will be recorded.
+                          We couldn't verify this playlist. It might be private or the URL/ID is incorrect.
                         </p>
                       </div>
                     </div>
@@ -249,13 +350,16 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
         </div>
 
         {/* Footer */}
-        {(status === 'preview' || status === 'fallback' || status === 'adding' || status === 'exists') && (
-          <div className="p-6 border-t border-white/5 flex gap-3 justify-end bg-black/20">
+        {(status === 'preview' || status === 'fallback' || status === 'spotify-generated' || status === 'adding' || status === 'exists') && (
+          <div className="p-6 border-t border-white/5 flex gap-3 justify-end bg-black/20 sticky bottom-0">
             <button
               onClick={() => {
                 setStatus('idle');
                 setPlaylistId('');
                 setPreviewData(null);
+                setCustomName('');
+                setCustomOwnerName('');
+                setCustomOwnerLink('');
               }}
               disabled={status === 'adding'}
               className="px-4 py-2 text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
@@ -274,8 +378,8 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
             ) : (
               <button
                 onClick={handleAdd}
-                disabled={status === 'adding'}
-                className="px-6 py-2 bg-green-500 hover:bg-green-400 text-black font-bold rounded-full transition-colors flex items-center gap-2 disabled:opacity-50"
+                disabled={status === 'adding' || (status === 'spotify-generated' && !customName)}
+                className="px-6 py-2 bg-green-500 hover:bg-green-400 text-black font-bold rounded-full transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {status === 'adding' && <Loader2 className="animate-spin" size={16} />}
                 Confirm & Add

@@ -104,3 +104,24 @@ export async function getPlaylistMetadata(playlistId: string): Promise<PlaylistM
 
   return response.json();
 }
+
+export async function checkSpotifyGeneratedPlaylist(playlistId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`https://open.spotify.com/playlist/${playlistId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (!response.ok) return false;
+    
+    const html = await response.text();
+    // Check for music:song meta tags which indicate tracks exist
+    const match = html.match(/<meta name="music:song" content="https:\/\/open\.spotify\.com\/track\/([a-zA-Z0-9]+)"/);
+    
+    return !!match;
+  } catch (e) {
+    console.error('Error checking spotify generated playlist:', e);
+    return false;
+  }
+}

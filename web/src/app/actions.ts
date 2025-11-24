@@ -1,12 +1,13 @@
 'use server';
 
 import { getPool } from '@/lib/db';
-import { getPlaylistMetadata } from '@/lib/spotify';
+import { getPlaylistMetadata, checkSpotifyGeneratedPlaylist, getUserProfile } from '@/lib/spotify';
 import { revalidatePath } from 'next/cache';
 
 export type PreviewResult = 
   | { type: 'success'; data: any }
   | { type: 'fallback'; id: string }
+  | { type: 'spotify-generated'; id: string }
   | { type: 'exists'; message: string }
   | { type: 'error'; message: string };
 
@@ -35,8 +36,16 @@ export async function previewPlaylist(playlistId: string): Promise<PreviewResult
       const metadata = await getPlaylistMetadata(playlistId);
       return { type: 'success', data: metadata };
     } catch (err) {
-      console.log('Metadata fetch failed, falling back:', err);
-      return { type: 'fallback', id: playlistId };
+      console.log('Metadata fetch failed, checking if spotify generated:', err);
+      
+      // Check if it's a valid spotify generated playlist
+      const isSpotifyGenerated = await checkSpotifyGeneratedPlaylist(playlistId);
+      
+      if (isSpotifyGenerated) {
+        return { type: 'spotify-generated', id: playlistId };
+      }
+      
+      return { type: 'error', message: 'Could not fetch playlist. It might be private or the URL is incorrect.' };
     }
 
   } catch (err) {
@@ -45,28 +54,59 @@ export async function previewPlaylist(playlistId: string): Promise<PreviewResult
   }
 }
 
-export async function addPlaylist(playlistId: string, isFallback: boolean) {
+export async function addPlaylist(
+  playlistId: string, 
+  isFallback: boolean,
+  customMetadata?: {
+    name: string;
+    ownerId?: string;
+  }
+) {
   try {
     const pool = await getPool();
     
     if (isFallback) {
+      // Use custom metadata if provided (for spotify-generated flow), otherwise defaults
+      const name = customMetadata?.name || 'Unknown Playlist';
+      let ownerName = 'spotify';
+      let ownerId = 'spotify';
+
+      // If ownerId is provided, try to fetch their profile
+      if (customMetadata?.ownerId) {
+        try {
+          const userProfile = await getUserProfile(customMetadata.ownerId);
+          ownerName = userProfile.display_name;
+          ownerId = userProfile.id;
+        } catch (e) {
+          console.error('Failed to fetch user profile for custom owner:', e);
+          // Fallback to using the ID as name if fetch fails, or just 'spotify'
+          ownerName = customMetadata.ownerId;
+          ownerId = customMetadata.ownerId;
+        }
+      }
+      
       await pool.request()
         .input('id', playlistId)
         .input('isOrdered', 1)
         .input('isGenerated', 1)
+        .input('name', name)
+        .input('ownerName', ownerName)
+        .input('ownerId', ownerId)
         .query(`
           INSERT INTO playlists (
             playlist_spotify_id, 
             is_ordered, 
             is_spotify_generated,
             playlist_name,
+            playlist_owner_display_name,
             playlist_owner_spotify_id
           ) VALUES (
             @id, 
             @isOrdered, 
             @isGenerated,
-            'Unknown Playlist',
-            'spotify'
+            @name,
+            @ownerName,
+            @ownerId
           )
         `);
     } else {

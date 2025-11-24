@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Plus } from 'lucide-react';
 import { PlaylistSelector } from '@/components/PlaylistSelector';
@@ -19,10 +19,22 @@ interface Playlist {
 
 export function Hero() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalInitialValue, setAddModalInitialValue] = useState('');
+
+  useEffect(() => {
+    const addId = searchParams.get('addPlaylist');
+    if (addId) {
+      setAddModalInitialValue(addId);
+      setIsAddModalOpen(true);
+      // Clean up URL
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     fetchWithRetry('/api/playlists')
@@ -146,6 +158,7 @@ export function Hero() {
         isOpen={isAddModalOpen} 
         onClose={() => {
           setIsAddModalOpen(false);
+          setAddModalInitialValue('');
           // Refresh playlists to show the new one immediately
           setLoading(true);
           fetch('/api/playlists')
@@ -162,6 +175,7 @@ export function Hero() {
               setLoading(false);
             });
         }} 
+        initialValue={addModalInitialValue}
       />
     </div>
   );
