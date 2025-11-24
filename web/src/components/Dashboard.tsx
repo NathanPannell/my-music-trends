@@ -349,7 +349,7 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
           <div className="flex items-center justify-center h-64 text-zinc-500">
             {loading ? '' : 'Select a playlist to view history'}
           </div>
-        ) : data.stats.totalDays <= 1 ? (
+        ) : data.stats.uniqueTracks === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 max-w-2xl mx-auto text-center px-6">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-8">
               <h3 className="text-xl font-bold text-blue-400 mb-4">Tracking Started!</h3>
