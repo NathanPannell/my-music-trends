@@ -3,3 +3,5 @@ packages/
 .env
 .idea/
 .fake
+
+todo.md

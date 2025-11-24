@@ -8,6 +8,7 @@ import { PlaylistSelector } from '@/components/PlaylistSelector';
 import { AddPlaylistModal } from '@/components/AddPlaylistModal';
 import { ParticleBackground } from '@/components/ParticleBackground';
 import { SpotifyImage } from '@/lib/spotify';
+import { fetchWithRetry } from '@/lib/api';
 
 interface Playlist {
   id: string;
@@ -24,8 +25,7 @@ export function Hero() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/playlists')
-      .then(res => res.json())
+    fetchWithRetry('/api/playlists')
       .then((data: Playlist[]) => {
         // Filter playlists by owner "Nathan Pannell" for demo
         const filteredPlaylists = data.filter(p => p.owner === 'Nathan Pannell');

@@ -10,6 +10,7 @@ import { ParticleBackground } from '@/components/ParticleBackground';
 import { ChevronDown, ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlaylistMetadata, SpotifyImage } from '@/lib/spotify';
+import { fetchWithRetry } from '@/lib/api';
 
 interface Playlist {
   id: string;
@@ -38,8 +39,7 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
 
   // Fetch playlists on mount
   useEffect(() => {
-    fetch('/api/playlists')
-      .then(res => res.json())
+    fetchWithRetry('/api/playlists')
       .then((data: Playlist[]) => {
         setPlaylists(data);
         if (data.length > 0 && !selectedPlaylistId) {
@@ -61,8 +61,8 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
     setHighlightedTrackId(null);
 
     Promise.all([
-      fetch(`/api/playlists/${selectedPlaylistId}/timeline`).then(res => res.json()),
-      fetch(`/api/playlists/${selectedPlaylistId}/metadata`).then(res => res.json())
+      fetchWithRetry(`/api/playlists/${selectedPlaylistId}/timeline`),
+      fetchWithRetry(`/api/playlists/${selectedPlaylistId}/metadata`)
     ])
       .then(([timelineData, metadataData]) => {
         setData(timelineData);
