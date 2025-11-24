@@ -20,6 +20,7 @@ type StagingEntity = {
 }
 type PlaylistEntity = {
     PlaylistSpotifyId : string
+    PlaylistOwnerSpotifyId : string
     IsOrdered : bool
     IsSpotifyGenerated : bool
 }
@@ -30,6 +31,9 @@ type TrackEntity = {
     AlbumArtUri : string
     ArtistName : string
 }
+
+type UserProfileResponse = JsonProvider<"""{"display_name": "User Name"}""">
+type PlaylistDetailsResponse = JsonProvider<"""{"name": "Playlist Name", "images": [{"url": "https://example.com/image.jpg"}]}""">
 
 
 // GLOBAL CONSTANTS
@@ -217,6 +221,38 @@ let fetchTrackMetadata (accessToken: string) (trackIds: string list) : TrackEnti
     )
 
 
+let fetchUserDisplayName (accessToken: string) (userId: string) : string option =
+    let response = 
+        Http.Request(
+            $"{SpotifyApiUrl}/users/{userId}",
+            httpMethod = HttpMethod.Get,
+            headers = ["Authorization", $"Bearer {accessToken}"]
+        )
+    match response.StatusCode, response.Body with
+    | 200, Text json -> 
+        try 
+            let user = UserProfileResponse.Parse(json)
+            Some user.DisplayName
+        with _ -> None
+    | _ -> None
+
+let fetchPlaylistDetails (accessToken: string) (playlistId: string) : (string * string) option =
+    let response = 
+        Http.Request(
+            $"{SpotifyApiUrl}/playlists/{playlistId}",
+            httpMethod = HttpMethod.Get,
+            headers = ["Authorization", $"Bearer {accessToken}"]
+        )
+    match response.StatusCode, response.Body with
+    | 200, Text json -> 
+        try
+            let playlist = PlaylistDetailsResponse.Parse(json)
+            let image = if playlist.Images.Length > 0 then playlist.Images.[0].Url else ""
+            Some (playlist.Name, image)
+        with _ -> None
+    | _ -> None
+
+
 // DATABASE IO OPERATIONS
 
 let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
@@ -227,6 +263,7 @@ let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
     use cmd = new SqlCommand("
         SELECT 
             playlist_spotify_id,
+            playlist_owner_spotify_id,
             is_ordered,
             is_spotify_generated
         FROM playlists", conn)
@@ -234,12 +271,14 @@ let getPlaylistRecordsFromDb (connectionString: string) : PlaylistEntity list =
     use reader = cmd.ExecuteReader()
 
     let ordPlaylistSpotifyId = reader.GetOrdinal "playlist_spotify_id"
+    let ordPlaylistOwnerSpotifyId = reader.GetOrdinal "playlist_owner_spotify_id"
     let ordIsOrdered = reader.GetOrdinal "is_ordered"
     let ordIsSpotifyGenerated = reader.GetOrdinal "is_spotify_generated"
 
     [ while reader.Read() do
         yield {
             PlaylistSpotifyId = reader.GetFieldValue<string> ordPlaylistSpotifyId
+            PlaylistOwnerSpotifyId = reader.GetFieldValue<string> ordPlaylistOwnerSpotifyId
             IsOrdered = reader.GetFieldValue<bool> ordIsOrdered
             IsSpotifyGenerated = reader.GetFieldValue<bool> ordIsSpotifyGenerated
         }
@@ -275,11 +314,6 @@ let updateTrackMetadata (connectionString: string) (tracks: TrackEntity list) : 
         use conn = new SqlConnection(connectionString)
         conn.Open()
         
-        // Using a transaction for bulk updates could be better, but simple loop is fine for now
-        // or construct a large UPDATE statement or use a temp table.
-        // Given the likely volume, individual updates might be slow but safe enough.
-        // Let's use a parameterized query in a loop for simplicity and safety.
-        
         use cmd = new SqlCommand("
             UPDATE tracks 
             SET track_name = @name, album_art_uri = @art, artist_name = @artist
@@ -300,6 +334,53 @@ let updateTrackMetadata (connectionString: string) (tracks: TrackEntity list) : 
         printfn "Successfully updated track metadata"
 
 
+let updatePlaylistMetadata (connectionString: string) (accessToken: string) (playlists: PlaylistEntity list) : unit =
+    printfn "Updating metadata for %d playlists..." playlists.Length
+    use conn = new SqlConnection(connectionString)
+    conn.Open()
+
+    use cmd = new SqlCommand("
+        UPDATE playlists 
+        SET playlist_owner_display_name = @ownerName, 
+            playlist_name = COALESCE(@pName, playlist_name), 
+            playlist_art_uri = COALESCE(@pArt, playlist_art_uri)
+        WHERE playlist_spotify_id = @id", conn)
+
+    let pId = cmd.Parameters.Add("@id", SqlDbType.VarChar, 22)
+    let pOwnerName = cmd.Parameters.Add("@ownerName", SqlDbType.NVarChar, 255)
+    let pName = cmd.Parameters.Add("@pName", SqlDbType.NVarChar, 255)
+    let pArt = cmd.Parameters.Add("@pArt", SqlDbType.VarChar, 255)
+
+    playlists |> List.iter (fun p ->
+        printfn "Processing playlist %s..." p.PlaylistSpotifyId
+        
+        // Fetch Owner Name
+        let ownerName = 
+            match fetchUserDisplayName accessToken p.PlaylistOwnerSpotifyId with
+            | Some name -> name
+            | None -> "Unknown"
+
+        // Fetch Playlist Details if not spotify generated
+        let (plName, plArt) = 
+            if not p.IsSpotifyGenerated then
+                match fetchPlaylistDetails accessToken p.PlaylistSpotifyId with
+                | Some (n, a) -> (n, a)
+                | None -> (null, null)
+            else
+                (null, null)
+
+        pId.Value <- p.PlaylistSpotifyId
+        pOwnerName.Value <- ownerName
+        
+        if plName <> null then pName.Value <- plName else pName.Value <- System.DBNull.Value
+        if plArt <> null then pArt.Value <- plArt else pArt.Value <- System.DBNull.Value
+
+        cmd.ExecuteNonQuery() |> ignore
+        // Rate limit
+        System.Threading.Thread.Sleep(200)
+    )
+    printfn "Successfully updated playlist metadata"
+
 
 let main () = 
     let spotifyAccessToken = getAccessToken () |> Option.get
@@ -308,8 +389,13 @@ let main () =
     let dbConnectionString = getEnv "connection_string"
 
     getPlaylistRecordsFromDb dbConnectionString
-    |> fetchAllPlaylistTracks spotifyAccessToken
-    |> insertRecordsInStaging dbConnectionString
+    |> fun playlists ->
+        // Fetch and insert tracks
+        let stagingRecords = fetchAllPlaylistTracks spotifyAccessToken playlists
+        insertRecordsInStaging dbConnectionString stagingRecords
+        
+        // Update playlist metadata
+        updatePlaylistMetadata dbConnectionString spotifyAccessToken playlists
 
     // New metadata population flow
     let missingTracks = getTracksWithMissingMetadata dbConnectionString

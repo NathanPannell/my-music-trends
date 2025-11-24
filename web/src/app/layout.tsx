@@ -14,9 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Playlist History",
-  description: "Interactive timeline of playlist history",
+  title: "Playlist Wrapped",
+  description: "Your interactive music history timeline",
 };
+
+
+
 
 export default function RootLayout({
   children,
@@ -26,10 +29,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-black text-white`}
+        suppressHydrationWarning
       >
-        {children}
-        <Analytics />
+        <main className="flex-1">
+          {children}
+          <Analytics />
+        </main>
       </body>
     </html>
   );
