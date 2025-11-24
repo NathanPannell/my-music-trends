@@ -12,6 +12,8 @@ export interface TrackSnapshotItem {
   rank: number;
   added: boolean;
   removed: boolean;
+  rankChange: number; // Positive = moved up (improved), Negative = moved down
+  isNew: boolean;
 }
 
 export interface DailySnapshot {
@@ -22,7 +24,10 @@ export interface DailySnapshot {
 export interface PlaylistStats {
   uniqueTracks: number;
   totalDays: number;
-  mostPopularTracks: { trackId: string; days: number }[];
+  uniqueNumberOneTracks: { trackId: string; daysAtNo1: number }[];
+  longestStreakTracks: { trackId: string; days: number; streak: number; averageRank: number }[];
+  oneAndDoneTracks: { trackId: string; days: number; rank: number }[];
+  bestAverageRankTracks: { trackId: string; averageRank: number; days: number }[];
 }
 
 export interface TimelineResponse {
@@ -54,6 +59,10 @@ export function generateMockTimeline(playlistId: string): TimelineResponse {
 
   // Initial state
   let currentTracks = ['t1', 't2', 't3', 't4', 't5'];
+  let previousRankMap: Record<string, number> = {};
+  
+  // Initialize previous ranks
+  currentTracks.forEach((id, idx) => previousRankMap[id] = idx + 1);
 
   for (let i = 0; i <= totalDays; i++) {
     const currentDate = addDays(startDate, i);
@@ -61,13 +70,11 @@ export function generateMockTimeline(playlistId: string): TimelineResponse {
     
     // Simulate changes
     const added: string[] = [];
-    const removed: string[] = [];
     
     if (i > 0 && Math.random() > 0.7) {
       // Randomly remove a track
       if (currentTracks.length > 3) {
         const removeIdx = Math.floor(Math.random() * currentTracks.length);
-        removed.push(currentTracks[removeIdx]);
         currentTracks.splice(removeIdx, 1);
       }
       
@@ -87,22 +94,40 @@ export function generateMockTimeline(playlistId: string): TimelineResponse {
       }
     }
 
-    const snapshotTracks: TrackSnapshotItem[] = currentTracks.map((tid, idx) => ({
-      id: tid,
-      rank: idx + 1,
-      added: added.includes(tid),
-      removed: false // Logic for removed is tricky in snapshot view, usually "removed" means it WAS here yesterday but not today. 
-                     // But if it's not in the list, we can't show it in the list as "removed".
-                     // Typically "removed" visual is shown on the day it was removed, or we show it in a separate "changes" list.
-                     // For now, let's just track added. Removed tracks are just gone from the list.
-                     // If we want to show them as "just removed", we'd need to include them in the list with a flag?
-                     // Let's stick to simple list for now.
-    }));
+    const snapshotTracks: TrackSnapshotItem[] = currentTracks.map((tid, idx) => {
+      const currentRank = idx + 1;
+      const prevRank = previousRankMap[tid];
+      
+      // Calculate change
+      // If it wasn't there yesterday, it's new (no rank change to show, or show as new)
+      // If it was there, change = prev - current (e.g. prev 5, current 2 => +3 improvement)
+      let rankChange = 0;
+      let isNew = false;
+
+      if (prevRank === undefined) {
+        isNew = true;
+      } else {
+        rankChange = prevRank - currentRank;
+      }
+
+      return {
+        id: tid,
+        rank: currentRank,
+        added: added.includes(tid), // "added" in this specific step simulation
+        removed: false,
+        rankChange,
+        isNew
+      };
+    });
 
     snapshots.push({
       date: dateStr,
       tracks: snapshotTracks
     });
+
+    // Update previous rank map for next iteration
+    previousRankMap = {};
+    currentTracks.forEach((id, idx) => previousRankMap[id] = idx + 1);
   }
 
   return {
@@ -110,7 +135,10 @@ export function generateMockTimeline(playlistId: string): TimelineResponse {
     stats: {
       uniqueTracks: MOCK_TRACKS.length,
       totalDays,
-      mostPopularTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, days: 20 })) // Mock stats
+      uniqueNumberOneTracks: MOCK_TRACKS.slice(0, 2).map(t => ({ trackId: t.id, daysAtNo1: 5 })),
+      longestStreakTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, days: 20, streak: 15, averageRank: 5 })),
+      oneAndDoneTracks: MOCK_TRACKS.slice(3, 4).map(t => ({ trackId: t.id, days: 1, rank: 10 })),
+      bestAverageRankTracks: MOCK_TRACKS.slice(0, 3).map(t => ({ trackId: t.id, averageRank: 2.5, days: 15 }))
     },
     trackDefinitions,
     snapshots
