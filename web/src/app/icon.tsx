@@ -16,19 +16,32 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 20,
-          background: 'linear-gradient(to bottom right, #1a1a1a, #000)',
+          background: 'black',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#FFD700', // Gold
-          borderRadius: '8px',
-          border: '1px solid #333',
+          borderRadius: '50%', // Circular icon looks better in tabs usually
         }}
       >
-        🎺
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '2px',
+            width: '20px',
+            height: '20px',
+          }}
+        >
+          {/* Waveform bars */}
+          <div style={{ width: '3px', height: '8px', background: '#1DB954', borderRadius: '1px' }} />
+          <div style={{ width: '3px', height: '16px', background: '#1DB954', borderRadius: '1px' }} />
+          <div style={{ width: '3px', height: '12px', background: '#1DB954', borderRadius: '1px' }} />
+          <div style={{ width: '3px', height: '20px', background: '#1DB954', borderRadius: '1px' }} />
+          <div style={{ width: '3px', height: '10px', background: '#1DB954', borderRadius: '1px' }} />
+        </div>
       </div>
     ),
     {

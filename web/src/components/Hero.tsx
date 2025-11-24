@@ -54,13 +54,7 @@ export function Hero() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        Loading...
-      </div>
-    );
-  }
+
 
   // Use the selected playlist for the background, or the first available one as a fallback for visuals
   const activePlaylist = playlists.find(p => p.id === selectedPlaylistId) || playlists[0];

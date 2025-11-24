@@ -207,13 +207,13 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
   if (!selectedPlaylistId && playlists.length === 0) {
      return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        Loading playlists...
+        {/* Loading state hidden */}
       </div>
     );
   }
 
   const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
-  const displayName = metadata?.name || selectedPlaylist?.name || 'Loading...';
+  const displayName = metadata?.name || selectedPlaylist?.name || '';
   const displayImage = metadata?.images?.[0]?.url || '/spotify-logo.png';
 
 
@@ -347,7 +347,7 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
 
         {loading || !data ? (
           <div className="flex items-center justify-center h-64 text-zinc-500">
-            {loading ? 'Loading timeline data...' : 'Select a playlist to view history'}
+            {loading ? '' : 'Select a playlist to view history'}
           </div>
         ) : data.stats.totalDays <= 1 ? (
           <div className="flex flex-col items-center justify-center h-64 max-w-2xl mx-auto text-center px-6">

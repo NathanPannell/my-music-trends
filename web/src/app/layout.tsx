@@ -14,8 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Playlist Wrapped",
-  description: "Your interactive music history timeline",
+  title: {
+    default: "Playlist Timeline",
+    template: "%s | Playlist Timeline"
+  },
+  description: "Visualize the journey of your Spotify playlists. Discover how tracks rise and fall, explore daily rankings, and relive your musical history.",
+  openGraph: {
+    title: "Playlist Timeline",
+    description: "Visualize the journey of your Spotify playlists.",
+    siteName: "Playlist Timeline",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Playlist Timeline",
+    description: "Visualize the journey of your Spotify playlists.",
+  },
 };
 
 
