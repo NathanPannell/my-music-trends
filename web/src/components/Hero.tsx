@@ -58,7 +58,7 @@ export function Hero() {
 
   // Use the selected playlist for the background, or the first available one as a fallback for visuals
   const activePlaylist = playlists.find(p => p.id === selectedPlaylistId) || playlists[0];
-  const displayImage = activePlaylist?.images?.[0]?.url || '/spotify-logo.png';
+  const displayImage = activePlaylist?.images?.[0]?.url || '/api/placeholder';
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">

@@ -205,7 +205,7 @@ export function AddPlaylistModal({ isOpen, onClose }: AddPlaylistModalProps) {
                   >
                     <div className="flex gap-4">
                       <img 
-                        src={previewData.images?.[0]?.url || '/spotify-logo.png'} 
+                        src={previewData.images?.[0]?.url || '/api/placeholder'} 
                         alt={previewData.name}
                         className="w-24 h-24 rounded-lg object-cover shadow-lg" 
                       />

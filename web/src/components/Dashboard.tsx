@@ -214,7 +214,7 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
 
   const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
   const displayName = metadata?.name || selectedPlaylist?.name || '';
-  const displayImage = metadata?.images?.[0]?.url || '/spotify-logo.png';
+  const displayImage = metadata?.images?.[0]?.url || '/api/placeholder';
 
 
   return (
@@ -286,13 +286,13 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
                       className="flex items-center justify-center md:justify-start gap-4 bg-white/5 backdrop-blur-md p-2 pr-6 rounded-full border border-white/10 hover:bg-white/10 transition-all group/owner"
                     >
                       <img 
-                        src={metadata?.owner?.images?.[0]?.url || '/spotify-logo.png'} 
-                        alt={metadata?.owner?.display_name || 'Spotify'} 
+                        src={metadata?.owner?.images?.[0]?.url || '/api/placeholder'} 
+                        alt={metadata?.owner?.display_name || 'Unknown User'} 
                         className="w-10 h-10 rounded-full"
                       />
                       <div className="text-sm">
                         <span className="text-white/60 mr-1">Curated by</span>
-                        <span className="font-bold text-white group-hover/owner:text-green-400 transition-colors">{metadata?.owner?.display_name || 'Spotify'}</span>
+                        <span className="font-bold text-white group-hover/owner:text-green-400 transition-colors">{metadata?.owner?.display_name || 'Unknown User'}</span>
                       </div>
                     </a>
                   </motion.div>
