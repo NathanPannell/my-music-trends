@@ -1,4 +1,4 @@
-# My Music Trends
+# Spotify Playlist Timeline
 
 ## Inspiration
 
