@@ -20,9 +20,10 @@ interface Playlist {
 
 interface DashboardProps {
   initialPlaylistId?: string;
+  hideDropdown?: boolean;
 }
 
-export function Dashboard({ initialPlaylistId }: DashboardProps) {
+export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>(initialPlaylistId || '');
   const [data, setData] = useState<TimelineResponse | null>(null);
@@ -217,7 +218,7 @@ export function Dashboard({ initialPlaylistId }: DashboardProps) {
 
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white pb-24">
       <div className="w-full">
         
         {/* Header & Stats Section */}
@@ -297,18 +298,20 @@ export function Dashboard({ initialPlaylistId }: DashboardProps) {
                   </motion.div>
 
                   {/* Selector */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="w-full md:w-72 mt-2"
-                  >
-                    <PlaylistSelector 
-                      playlists={playlists} 
-                      selectedId={selectedPlaylistId} 
-                      onSelect={setSelectedPlaylistId} 
-                    />
-                  </motion.div>
+                  {!hideDropdown && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      className="w-full md:w-72 mt-2"
+                    >
+                      <PlaylistSelector 
+                        playlists={playlists} 
+                        selectedId={selectedPlaylistId} 
+                        onSelect={setSelectedPlaylistId} 
+                      />
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>
@@ -397,7 +400,7 @@ export function Dashboard({ initialPlaylistId }: DashboardProps) {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            onClick={scrollToTop}
+            onClick={scrollToStats}
             className="fixed top-8 right-8 z-50 p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20 transition-colors shadow-lg group"
             title="Back to Top"
           >

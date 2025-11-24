@@ -1,10 +1,11 @@
-import { Dashboard } from '@/components/Dashboard';
+'use client';
 
-export default async function PlaylistPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  return <Dashboard initialPlaylistId={id} />;
+import { Dashboard } from '@/components/Dashboard';
+import { useParams } from 'next/navigation';
+
+export default function PlaylistPage() {
+  const params = useParams();
+  const id = params.id as string;
+
+  return <Dashboard initialPlaylistId={id} hideDropdown={true} />;
 }

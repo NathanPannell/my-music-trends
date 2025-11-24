@@ -1,7 +1,7 @@
 'use client';
 
-import { Dashboard } from '@/components/Dashboard';
+import { Hero } from '@/components/Hero';
 
-export default function DashboardPage() {
-  return <Dashboard />;
+export default function HomePage() {
+  return <Hero />;
 }
