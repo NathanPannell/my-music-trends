@@ -303,7 +303,7 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.3 }}
-                      className="w-full md:w-72 mt-2"
+                      className="w-full md:w-72 mt-2 flex flex-col gap-3"
                     >
                       <PlaylistSelector 
                         playlists={playlists} 
@@ -348,6 +348,18 @@ export function Dashboard({ initialPlaylistId, hideDropdown }: DashboardProps) {
         {loading || !data ? (
           <div className="flex items-center justify-center h-64 text-zinc-500">
             {loading ? 'Loading timeline data...' : 'Select a playlist to view history'}
+          </div>
+        ) : data.stats.totalDays <= 1 ? (
+          <div className="flex flex-col items-center justify-center h-64 max-w-2xl mx-auto text-center px-6">
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-blue-400 mb-4">Tracking Started!</h3>
+              <p className="text-zinc-300 leading-relaxed">
+                This playlist has just been added to our system. It typically takes up to <strong>24 hours</strong> for the first batch of data to be recorded and appear here.
+              </p>
+              <p className="text-zinc-400 mt-4 text-sm">
+                Check back tomorrow to see your first timeline update!
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-8 pb-32">

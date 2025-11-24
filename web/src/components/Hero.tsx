@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, Plus } from 'lucide-react';
 import { PlaylistSelector } from '@/components/PlaylistSelector';
+import { AddPlaylistModal } from '@/components/AddPlaylistModal';
 import { ParticleBackground } from '@/components/ParticleBackground';
 import { SpotifyImage } from '@/lib/spotify';
 
@@ -20,6 +21,7 @@ export function Hero() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/playlists')
@@ -119,6 +121,16 @@ export function Hero() {
                 />
               </div>
             </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center justify-center gap-2 w-full py-3 text-sm font-medium text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5 hover:border-white/10 backdrop-blur-sm"
+            >
+              <Plus size={16} />
+              Add New Playlist
+            </motion.button>
           </motion.div>
 
         </div>
@@ -135,6 +147,28 @@ export function Hero() {
           </a>
         </motion.div>
       </div>
+
+      <AddPlaylistModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => {
+          setIsAddModalOpen(false);
+          // Refresh playlists to show the new one immediately
+          setLoading(true);
+          fetch('/api/playlists')
+            .then(res => res.json())
+            .then((data: Playlist[]) => {
+              // Re-apply filter if needed, but maybe we want to show the new one regardless of owner?
+              // For now, let's keep the filter consistent with the initial load
+              const filteredPlaylists = data.filter(p => p.owner === 'Nathan Pannell');
+              setPlaylists(filteredPlaylists);
+              setLoading(false);
+            })
+            .catch(err => {
+              console.error('Failed to refresh playlists:', err);
+              setLoading(false);
+            });
+        }} 
+      />
     </div>
   );
 }
