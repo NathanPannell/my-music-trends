@@ -94,6 +94,19 @@
         "uri": "string",
         "is_local": false
       }
+    },
+    {
+      "added_at": "string",
+      "added_by": {
+        "external_urls": {
+          "spotify": "string"
+        },
+        "href": "string",
+        "id": "string",
+        "type": "user",
+        "uri": "string"
+      },
+      "track": null
     }
   ]
 }

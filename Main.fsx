@@ -115,13 +115,17 @@ let rec getPlaylistFromApi (accessToken: string) (offset: int) (playlistId: stri
     
         let currentTracks =  
             playlistItems.Items  
-            |> Array.mapi (fun i playlistItem ->  
-                {  
-                    PlaylistSpotifyId = playlistId  
-                    TrackSpotifyId = playlistItem.Track.Id  
-                    Rank = i + offset + 1  
-                })  
-            |> List.ofArray  
+            |> Array.mapi (fun i playlistItem -> (i, playlistItem))
+            |> Array.choose (fun (i, playlistItem) ->
+                match playlistItem.Track with
+                | Some track when not (System.String.IsNullOrEmpty track.Id) ->
+                    Some {  
+                        PlaylistSpotifyId = playlistId  
+                        TrackSpotifyId = track.Id  
+                        Rank = i + offset + 1  
+                    }
+                | _ -> None)
+            |> List.ofArray
         
         let subsequentTracks =  
             if playlistItems.Total >= offset + SpotifyTrackLimit then  
